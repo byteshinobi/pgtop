@@ -2,3 +2,7 @@ MYMETA*
 Makefile
 blib
 pm_to_blib
+pgtoprc-beta
+pgtoprc-prod
+pgtoprc-prod-replica
+pgtoprc

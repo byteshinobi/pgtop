@@ -97,6 +97,7 @@ my %config = (
 );
 
 my %qcache = ();           # The query cache--used for full query info support.
+my %fqcache = ();          # Used for displaying full query info.
 my %ucache = ();           # The user cache--used for full killing by user
 my %dbcache = ();          # The db cache.  This should be merged at some point.
 my %runtime = ();          # Stores the query runtime
@@ -666,6 +667,7 @@ sub GetData()
     my $now_time;
 
     %qcache = ();  ## recycle memory
+    %fqcache = ();
     %dbcache = ();
     %runtime = ();
 
@@ -963,17 +965,21 @@ SQL
         ## may be re-enabled later as an option.
 
         ## leading space removal
-        $thread->{Info} =~ s/^\s*//;
+        my $query = $thread->{Info};
+        $query =~ s/^\s*//;
+
 
         ## remove newlines and carriage returns
-        $thread->{Info} =~ s/[\n\r]//g;
+        $query =~ s/[\n\r]//g;
 
         ## collpase whitespace
-        $thread->{Info} =~ s/\s+/ /g;
+        $query =~ s/\s+/ /g;
 
         ## stow it in the cache
         my $tid = $thread->{Id};
-        $qcache{$tid} = $thread->{Info};
+        $qcache{$tid} = $query;
+        $fqcache{$tid} = $thread->{Info};
+        # $thread->{Info} = $query;
         $dbcache{$tid} = $thread->{db};
         $ucache{$tid} = $thread->{User};
 
@@ -1015,7 +1021,9 @@ SQL
 
         if ($thread->{Info})
         {
-            $smInfo = substr $thread->{Info}, 0, $free;
+            my $tid = $thread->{Id};
+            $smInfo = $qcache{$tid};
+            $smInfo = substr $smInfo, 0, $free;
         }
         elsif ($thread->{State})
         {
@@ -1259,7 +1267,7 @@ sub FullQueryInfo($)
         return;
     }
 
-    my $sql = $qcache{$id};
+    my $sql = $fqcache{$id};
     print $CLEAR;
     print "Thread $id was executing following query:\n\n";
     print YELLOW(), $sql,"\n\n", RESET();
@@ -1277,7 +1285,7 @@ sub Explain($)
         return;
     }
 
-    my $sql = $qcache{$id};
+    my $sql = $fqcache{$id};
     my $db  = $dbcache{$id};
 
     Execute("USE $db");
