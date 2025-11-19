@@ -27,4 +27,4 @@ if [ "$BUILD_FLAG" = true ] || ! docker image inspect "pgtop-${DB}" >/dev/null 2
 fi
 
 echo "Running ${DB}"
-docker run --rm -it pgtop-${DB}
+docker run --rm -it --add-host=host.docker.internal:host-gateway pgtop-${DB}
